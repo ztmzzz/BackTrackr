@@ -6,21 +6,25 @@ import java.awt.image.BufferedImage;
 import java.awt.image.MultiResolutionImage;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.sun.jna.platform.WindowUtils;
+import lombok.Data;
+import org.springframework.stereotype.Component;
 
 
 import javax.imageio.ImageIO;
 
+@Component
 public class Screenshot {
     private static final String screenshotPath = "screenshot/";
     private static final List<String> blockWindowNames = new ArrayList<>(List.of("KeePassXC"));
 
-    private final List<WindowInfo> blockWindows = new ArrayList<>();
-    private final List<WindowInfo> unblockWindows = new ArrayList<>();
+    private final List<WindowInfo> allWindows = new ArrayList<>();
 
     static class WindowInfo {
         String title;
@@ -37,12 +41,23 @@ public class Screenshot {
         }
     }
 
+
+    static class ScreenshotInfo {
+        String windowName;
+        BufferedImage image;
+
+        public ScreenshotInfo(String windowName, BufferedImage image) {
+            this.windowName = windowName;
+            this.image = image;
+        }
+    }
+
     public static void main(String[] args) throws AWTException, IOException {
         Screenshot screenshot = new Screenshot();
         screenshot.screenshot();
     }
 
-    private void screenshot() throws AWTException, IOException {
+    public ScreenshotInfo screenshot() throws AWTException, IOException {
         // 获取当前屏幕上所有窗口
         AtomicInteger depth = new AtomicInteger();
         WindowUtils.getAllWindows(true).forEach(desktopWindow -> {
@@ -51,11 +66,11 @@ public class Screenshot {
             }
             for (String disableWindowName : blockWindowNames) {
                 if (desktopWindow.getTitle().contains(disableWindowName)) {
-                    blockWindows.add(new WindowInfo(desktopWindow.getTitle(), desktopWindow.getLocAndSize(), depth.getAndIncrement(), true));
+                    allWindows.add(new WindowInfo(desktopWindow.getTitle(), desktopWindow.getLocAndSize(), depth.getAndIncrement(), true));
                     return;
                 }
             }
-            unblockWindows.add(new WindowInfo(desktopWindow.getTitle(), desktopWindow.getLocAndSize(), depth.getAndIncrement(), false));
+            allWindows.add(new WindowInfo(desktopWindow.getTitle(), desktopWindow.getLocAndSize(), depth.getAndIncrement(), false));
         });
         Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
         Dimension scaledScreenSize = defaultToolkit.getScreenSize();
@@ -68,14 +83,8 @@ public class Screenshot {
         Image image = multiResolutionImage.getResolutionVariant(screenWidth, screenHeight);
         BufferedImage screenCapture = (BufferedImage) image;
 
-//        BufferedImage screenCapture = robot.createScreenCapture(screenSize);
-
-        ImageIO.write(screenCapture, "jpg", new File(screenshotPath + "raw.jpg"));
-
         BufferedImage maskImage = new BufferedImage(screenWidth, screenHeight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D maskGraphics = maskImage.createGraphics();
-        List<WindowInfo> allWindows = new ArrayList<>(blockWindows);
-        allWindows.addAll(unblockWindows);
         allWindows.sort((o1, o2) -> o2.depth - o1.depth);
         for (WindowInfo window : allWindows) {
             if (window.isBlock) {
@@ -88,7 +97,7 @@ public class Screenshot {
             }
         }
         maskGraphics.dispose();
-        ImageIO.write(maskImage, "png", new File(screenshotPath + "mask.png"));
+//        ImageIO.write(maskImage, "png", new File(screenshotPath + "mask.png"));
 
         Graphics2D resultGraphics = screenCapture.createGraphics();
         resultGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 1f));
@@ -96,6 +105,13 @@ public class Screenshot {
         resultGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
         resultGraphics.dispose();
 
-        ImageIO.write(screenCapture, "jpg", new File(screenshotPath + "screenshot.jpg"));
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss");
+        String formattedDateTime = now.format(formatter); // "2023-06-18 12:34:56"
+        ImageIO.write(screenCapture, "jpg", new File(screenshotPath + formattedDateTime + ".jpg"));
+
+        String frontWindowName = allWindows.get(allWindows.size() - 1).title;
+        ScreenshotInfo info = new ScreenshotInfo(frontWindowName, screenCapture);
+        return info;
     }
 }

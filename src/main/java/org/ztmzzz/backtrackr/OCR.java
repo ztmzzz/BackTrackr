@@ -2,6 +2,7 @@ package org.ztmzzz.backtrackr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.*;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import javax.imageio.ImageIO;
@@ -11,17 +12,21 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
+@Component
 public class OCR {
     String venvPath = "./venv";
     String venvPythonPath = "./venv/Scripts/python";
     String venvPipPath = "./venv/Scripts/pip3";
-    String hubPath = "./venv/Scripts/hub";
+    String hubPath = "C:/Users/ztmzzz/anaconda3/envs/paddle/Scripts/hub";
+    private AtomicBoolean serviceStarted = new AtomicBoolean(false);
 
     public static void main(String[] args) throws IOException, InterruptedException {
         OCR ocr = new OCR();
-        String a = ocr.getAllText(ImageIO.read(new File("screenshot/raw.jpg")));
-        System.out.println(a);
+        ocr.startService();
+//        String a = ocr.getAllText(ImageIO.read(new File("screenshot/raw.jpg")));
+//        System.out.println(a);
     }
 
     public String getAllText(BufferedImage image) throws IOException {
@@ -95,11 +100,17 @@ public class OCR {
     public void startService() {
         final Object lock = new Object();
         final AtomicBoolean isServiceStarted = new AtomicBoolean(false);
+        final AtomicReference<Process> processRef = new AtomicReference<>();
 
         Thread thread = new Thread(() -> {
             try {
-                ProcessBuilder pb = new ProcessBuilder(hubPath, "serving", "start", "-m", "ch_pp-ocrv3");
+                ProcessBuilder pb = new ProcessBuilder(hubPath, "serving", "start", "-m", "ch_pp-ocrv3", "--use_gpu");
+                Map<String, String> env = pb.environment();
+                String oldPath = env.get("PATH");
+                String cudaPath = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.7\\bin;";
+                env.put("PATH", cudaPath + oldPath);
                 Process p = pb.start();
+                processRef.set(p);
                 BufferedReader in = new BufferedReader(new InputStreamReader(p.getErrorStream()));
                 String line;
                 while ((line = in.readLine()) != null) {
@@ -120,6 +131,14 @@ public class OCR {
             }
         });
         thread.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Process p = processRef.get();
+            if (p != null && p.isAlive()) {
+                p.destroyForcibly();
+            }
+        }));
+
         long timeout = 20000;
         long startTime = System.currentTimeMillis();
         synchronized (lock) {
@@ -136,7 +155,13 @@ public class OCR {
                 }
             }
         }
+
+        serviceStarted.set(isServiceStarted.get());
         System.out.println("OCR服务启动成功");
+    }
+
+    public boolean isServiceStarted() {
+        return serviceStarted.get();
     }
 
     private String getPythonPath() throws IOException {

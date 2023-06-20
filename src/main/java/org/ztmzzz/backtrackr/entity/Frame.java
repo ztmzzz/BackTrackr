@@ -10,14 +10,14 @@ import java.sql.Timestamp;
 @Table(name = "frame")
 public class Frame {
     @Id
-    @Column(name = "time")
+    @Column(name = "TIME")
     private Timestamp time;
 
-    @Column(name = "windowName")
+    @Column(name = "window_name")
     private String windowName;
 
     @Lob
-    @Column(name = "text", columnDefinition = "CLOB")
+    @Column(name = "TEXT", columnDefinition = "CLOB")
     private String text;
 
 
