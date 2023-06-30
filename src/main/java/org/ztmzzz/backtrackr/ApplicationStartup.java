@@ -10,11 +10,11 @@ public class ApplicationStartup {
 
     private boolean hasRun = false;
 
-    private final OCR ocr;
+    private final OCRProcessor ocrProcessor;
 
     @Autowired
-    public ApplicationStartup(OCR ocr) {
-        this.ocr = ocr;
+    public ApplicationStartup(OCRProcessor ocrProcessor) {
+        this.ocrProcessor = ocrProcessor;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -23,8 +23,7 @@ public class ApplicationStartup {
             return;
         }
         hasRun = true;
-
-        ocr.startService();
+//        ocrProcessor.startService();
 
     }
 }

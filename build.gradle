@@ -30,7 +30,8 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     // https://mvnrepository.com/artifact/net.java.dev.jna/jna-platform
     implementation 'net.java.dev.jna:jna-platform:5.13.0'
-
+    //implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'org.openpnp:opencv:4.7.0-0'
 
 }
 

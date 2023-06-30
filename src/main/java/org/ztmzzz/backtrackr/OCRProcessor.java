@@ -1,36 +1,41 @@
 package org.ztmzzz.backtrackr;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.ztmzzz.backtrackr.ImageProcessor.imageToBase64;
+
 @Component
-public class OCR {
+public class OCRProcessor {
     String venvPath = "./venv";
     String venvPythonPath = "./venv/Scripts/python";
     String venvPipPath = "./venv/Scripts/pip3";
     String hubPath = "C:/Users/ztmzzz/anaconda3/envs/paddle/Scripts/hub";
     private AtomicBoolean serviceStarted = new AtomicBoolean(false);
+    private static final Logger logger = LoggerFactory.getLogger(OCRProcessor.class);
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        OCR ocr = new OCR();
-        ocr.startService();
-//        String a = ocr.getAllText(ImageIO.read(new File("screenshot/raw.jpg")));
+        OCRProcessor ocrProcessor = new OCRProcessor();
+        ocrProcessor.startService();
+//        String a = ocrProcessor.getAllText(ImageIO.read(new File("screenshot/raw.jpg")));
 //        System.out.println(a);
     }
 
-    public String getAllText(BufferedImage image) throws IOException {
+    public String ocr(BufferedImage image) throws IOException {
         String base64Image = imageToBase64(image);
+        return ocr(base64Image);
+    }
+
+    public String ocr(String base64Image) throws IOException {
         String requestBody = "{\"images\":[\"" + base64Image + "\"]}";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -48,16 +53,10 @@ public class OCR {
         if (response.getStatusCode() == HttpStatus.OK) {
             return response.getBody();
         } else {
-            throw new RuntimeException("OCR API request failed");
+            throw new RuntimeException("OCRProcessor API request failed");
         }
     }
 
-    private String imageToBase64(BufferedImage image) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        ImageIO.write(image, "jpg", byteArrayOutputStream);
-        byte[] byteArray = byteArrayOutputStream.toByteArray();
-        return Base64.getEncoder().encodeToString(byteArray);
-    }
 
     public void installService() throws IOException, InterruptedException {
         String pythonPath = getPythonPath();
@@ -135,7 +134,12 @@ public class OCR {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             Process p = processRef.get();
             if (p != null && p.isAlive()) {
-                p.destroyForcibly();
+//                p.destroyForcibly();
+                try {
+                    stopService();
+                } catch (IOException | InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }));
 
@@ -157,7 +161,17 @@ public class OCR {
         }
 
         serviceStarted.set(isServiceStarted.get());
-        System.out.println("OCR服务启动成功");
+        if (serviceStarted.get()) {
+            logger.info("OCR服务启动成功");
+        } else {
+            logger.error("OCR服务启动失败");
+        }
+    }
+
+    public void stopService() throws IOException, InterruptedException {
+        ProcessBuilder pb = new ProcessBuilder(hubPath, "serving", "stop");
+        Process p = pb.start();
+        p.waitFor();
     }
 
     public boolean isServiceStarted() {
@@ -178,4 +192,6 @@ public class OCR {
             return line;
         }
     }
+
+
 }
