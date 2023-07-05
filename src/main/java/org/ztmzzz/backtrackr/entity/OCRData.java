@@ -1,7 +1,6 @@
 package org.ztmzzz.backtrackr.entity;
 
 import lombok.Data;
-
 import java.util.List;
 @Data
 public class OCRData {

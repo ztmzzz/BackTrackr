@@ -32,6 +32,9 @@ dependencies {
     implementation 'net.java.dev.jna:jna-platform:5.13.0'
     //implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'org.openpnp:opencv:4.7.0-0'
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-text
+    implementation 'org.apache.commons:commons-text:1.10.0'
+
 
 }
 

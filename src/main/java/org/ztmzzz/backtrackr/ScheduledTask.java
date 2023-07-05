@@ -22,6 +22,8 @@ public class ScheduledTask {
     private final ScreenshotProcessor screenshotProcessor;
     private final OCRProcessor ocrProcessor;
     private final ScreenshotService screenshotService;
+    public boolean runOCR = false;
+    public boolean runScreenshot = false;
 
     @Autowired
     public ScheduledTask(ScreenshotProcessor screenshotProcessor, OCRProcessor ocrProcessor, ScreenshotService screenshotService) {
@@ -32,6 +34,9 @@ public class ScheduledTask {
 
     @Scheduled(fixedRate = 2000)
     public void screenshotTask() throws IOException, AWTException {
+        if (!runScreenshot) {
+            return;
+        }
         ScreenshotProcessor.ScreenshotInfo info = screenshotProcessor.screenshot();
         ScreenshotEntity screenshotEntity = new ScreenshotEntity();
         screenshotEntity.setTime(info.timestamp);
@@ -50,9 +55,12 @@ public class ScheduledTask {
         screenshotService.save(now);
     }
 
-    @Scheduled(fixedRate = 4000)
+    @Scheduled(fixedDelay = 4000)
     //@Async("taskExecutor")
     public void ocrTask() throws IOException {
+        if (!runOCR) {
+            return;
+        }
         ArrayList<ScreenshotEntity> needOCR = (ArrayList<ScreenshotEntity>) screenshotService.findByTextIsNull();
         for (ScreenshotEntity now : needOCR) {
             int nowId = now.getId();
@@ -77,7 +85,7 @@ public class ScheduledTask {
                 fullOCR(now);
                 continue;
             }
-            Mat diff = simpleDiff(mat1, mat2);
+            Mat diff = simpleDiff(mat2, mat1);
             String base64 = matToBase64(diff);
             String diffText = ocrProcessor.ocr(base64);
             now.setText(diffText);

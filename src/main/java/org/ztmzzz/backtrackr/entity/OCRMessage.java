@@ -1,10 +1,11 @@
 package org.ztmzzz.backtrackr.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import java.util.List;
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class OCRMessage {
     private List<OCRData> data;
-    private String save_path;
 }

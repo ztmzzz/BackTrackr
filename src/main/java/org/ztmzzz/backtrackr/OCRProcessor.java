@@ -1,13 +1,21 @@
 package org.ztmzzz.backtrackr;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.ztmzzz.backtrackr.entity.OCRData;
+import org.ztmzzz.backtrackr.entity.OCRMessage;
+
 
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,6 +36,10 @@ public class OCRProcessor {
         ocrProcessor.startService();
 //        String a = ocrProcessor.getAllText(ImageIO.read(new File("screenshot/raw.jpg")));
 //        System.out.println(a);
+    }
+
+    private String convertToNormalText(String text) {
+        return StringEscapeUtils.unescapeJava(text);
     }
 
     public String ocr(BufferedImage image) throws IOException {
@@ -51,7 +63,17 @@ public class OCRProcessor {
 
         // 解析响应结果
         if (response.getStatusCode() == HttpStatus.OK) {
-            return response.getBody();
+            String jsonText = response.getBody();
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode node = objectMapper.readTree(jsonText);
+            node = node.get("msg").get(0);
+            OCRMessage data = objectMapper.treeToValue(node, OCRMessage.class);
+            List<OCRData> dataList = data.getData();
+            for (OCRData d : dataList) {
+                String text = d.getText();
+                d.setText(convertToNormalText(text));
+            }
+            return objectMapper.writeValueAsString(data);
         } else {
             throw new RuntimeException("OCRProcessor API request failed");
         }

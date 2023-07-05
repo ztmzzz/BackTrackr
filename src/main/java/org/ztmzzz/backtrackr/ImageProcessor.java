@@ -23,13 +23,13 @@ public class ImageProcessor {
 
     public static void main(String[] args) {
         OpenCV.loadLocally();
-        Mat img1 = Imgcodecs.imread("screenshot/2023/06/22/21/09-16.jpg");
-        Mat img2 = Imgcodecs.imread("screenshot/2023/06/22/21/10-45.jpg");
-        System.out.println(compareImage(img1, img2));
+        Mat img1 = Imgcodecs.imread("screenshot/2023/07/05/21/37-38.jpg");
+        Mat img2 = Imgcodecs.imread("screenshot/2023/07/05/21/37-36.jpg");
+
 //        Rect rect = getDifferenceBoundingRect(img1, img2);
 //        Mat subImg1 = img1.submat(rect);
 //        Mat subImg2 = img2.submat(rect);
-//        Imgcodecs.imwrite("screenshot/1.jpg", subImg1);
+        Imgcodecs.imwrite("screenshot/1.jpg", simpleDiff(img1, img2));
 //        Imgcodecs.imwrite("screenshot/2.jpg", subImg2);
     }
 

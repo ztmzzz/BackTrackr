@@ -36,3 +36,5 @@ out/
 .vscode/
 
 screenshot/
+db.mv.db
+db.trace.db
