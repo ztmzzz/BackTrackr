@@ -4,7 +4,8 @@ import SearchBox from "@/components/SearchBox.vue"
 
 const routes = [
     {path: '/search', component: SearchBox},
-    {path: '/video', component: VideoPlayer}
+    {path: '/video', component: VideoPlayer},
+    {path: '/', redirect: '/search'}
 
 ]
 

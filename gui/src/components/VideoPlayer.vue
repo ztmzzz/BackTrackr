@@ -2,13 +2,14 @@
   <el-row justify="center" align="middle" style="height: 70vh;">
     <canvas ref="canvas" style="position: absolute; top: 0; left: 0; z-index: 1;pointer-events:none;"></canvas>
     <video ref="video" controls preload="auto" style="max-width: 100%; max-height: 100%;"
-           @timeupdate="updateRectangles" @loadedmetadata="initCanvas">
+           @timeupdate="updateTime" @loadedmetadata="initCanvas" @mousemove="showControls"
+           @mouseleave="hideControls">
       <source :src="videoSrc" type="video/mp4">
     </video>
   </el-row>
   <el-row style="height: 15vh;">
     <el-col :span="24">
-      <TimeLine v-if="!loading" @change-time="setTime" @next-frame="nextFrame" @last-frame="lastFrame"
+      <TimeLine ref="timeline" v-if="!loading" @change-time="setTime" @next-frame="nextFrame" @last-frame="lastFrame"
                 style="width: 100%;height: 80%"
                 :initial-time="this.searchData?this.searchData.periodId[0][0]:null"
                 :marked-zone="this.searchData?this.searchData.periodId:undefined"
@@ -82,12 +83,21 @@ export default {
         context.strokeRect(x, y, width, height);
       });
     },
+    updateTime() {
+      this.updateRectangles()
+      this.updateTimeLine()
+    },
     updateRectangles() {
       if (this.searchData) {
         let time = this.$refs.video.currentTime;
         let id = this.startId + time;
         this.rectangles = this.searchData.timeToTextBox[id]
       }
+
+    },
+    updateTimeLine() {
+      let currentTime = this.$refs.video.currentTime;
+      this.$refs.timeline.setId(this.startId + Math.floor(currentTime));
     },
     async videoToStartId() {
       let lastSlashIndex = this.videoSrc.lastIndexOf('/');
@@ -119,7 +129,13 @@ export default {
       })
       this.searchData = response.data
       this.loading = false
-    }
+    },
+    showControls() {
+      this.$refs.video.controls = true;
+    },
+    hideControls() {
+      this.$refs.video.controls = false;
+    },
   },
   watch: {
     rectangles() {
@@ -130,7 +146,7 @@ export default {
     this.searchText = this.$route.query.searchText
     if (this.searchText) {
       this.search()
-    }else {
+    } else {
       this.loading = false
     }
   },

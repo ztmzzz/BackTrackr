@@ -24,9 +24,6 @@ export default {
   name: 'App',
   components: {},
   mounted() {
-    if(this.$router.path === '/') {
-      this.$router.push('/search')
-    }
   }
 
 }
