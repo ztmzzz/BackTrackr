@@ -4,11 +4,11 @@ const url = require('url')
 
 function createWindow() {
     const win = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 1024,
+        height: 768,
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: false,
         }
     })
 
@@ -19,6 +19,7 @@ function createWindow() {
     });
 
     win.loadURL(startUrl)
+    win.setMenu(null)
 }
 
 app.whenReady().then(createWindow)

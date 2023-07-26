@@ -1,22 +1,22 @@
 <template>
-  <el-row justify="center" align="middle" style="height: 70vh;">
-    <canvas ref="canvas" style="position: absolute; top: 0; left: 0; z-index: 1;pointer-events:none;"></canvas>
-    <video ref="video" controls preload="auto" style="max-width: 100%; max-height: 100%;"
-           @timeupdate="updateTime" @loadedmetadata="initCanvas" @mousemove="showControls"
-           @mouseleave="hideControls">
-      <source :src="videoSrc" type="video/mp4">
-    </video>
-  </el-row>
-  <el-row style="height: 15vh;">
-    <el-col :span="24">
+  <el-container :style="{ height: 'calc(100vh - 100px)' }">
+    <el-row justify="center" align="middle" style="height: 80%;">
+      <canvas ref="canvas" style="position: absolute; top: 0; left: 0; z-index: 1;pointer-events:none;"></canvas>
+      <video ref="video" controls preload="auto" style="max-width: 100%; max-height: 100%;"
+             @timeupdate="updateTime" @loadedmetadata="initCanvas" @mousemove="showControls"
+             @mouseleave="hideControls">
+        <source :src="videoSrc" type="video/mp4">
+      </video>
+    </el-row>
+    <el-row style="height: 20%;">
       <TimeLine ref="timeline" v-if="!loading" @change-time="setTime" @next-frame="nextFrame" @last-frame="lastFrame"
-                style="width: 100%;height: 80%"
+                style="width: 100%;height: 100%"
                 :initial-time="this.searchData?this.searchData.periodId[0][0]:null"
                 :marked-zone="this.searchData?this.searchData.periodId:undefined"
                 :marked-frame="this.searchData?Object.keys(this.searchData.timeToTextBox).map(Number):undefined"
       ></TimeLine>
-    </el-col>
-  </el-row>
+    </el-row>
+  </el-container>
 </template>
 
 

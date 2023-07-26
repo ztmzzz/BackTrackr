@@ -169,19 +169,27 @@ export default {
       }
       //绘制中间的线
       this.drawLine(this.canvas.width / 2, 0, this.canvas.width / 2, this.canvas.height / 4 * 2.5, 5)
+      //绘制时间
       let time = this.frameData[this.middleId];
       let date = new Date(time);
       let year = date.getFullYear();
       let month = (date.getMonth() + 1).toString().padStart(2, '0');
       let day = date.getDate().toString().padStart(2, '0');
       let hours = date.getHours().toString().padStart(2, '0');
-      this.ctx.fillText(year + '年' + month + '月' + day + '日' + hours + '时', this.canvas.width / 2, this.canvas.height / 8 * 7);
+      this.ctx.fillText(year + '年' + month + '月' + day + '日' + hours + '时', this.canvas.width / 2, this.canvas.height-8 );
     },
     setId(id) {
       if (id === this.middleId) {
         return;
       }
       this.middleId = id;
+      this.draw();
+    },
+    onResize() {
+      const {width, height} = this.$el.getBoundingClientRect();
+      const canvas = this.$refs.canvas;
+      canvas.width = width;
+      canvas.height = height;
       this.draw();
     },
   },
@@ -196,8 +204,13 @@ export default {
       console.log('timeline' + this.middleId)
       this.$emit('change-time', this.middleId);
       this.draw()
+      window.addEventListener('resize', this.onResize);
+      this.onResize();
     })
-  }
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.onResize);
+  },
 
 }
 </script>

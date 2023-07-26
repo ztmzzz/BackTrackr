@@ -2,8 +2,8 @@
   <el-row
       justify="center"
       align="middle"
-      style="height: 80vh;">
-    <el-col :span="8">
+      :style="{ height: 'calc(100vh - 100px)' }">
+    <el-col :span="8" >
       <el-input
           v-model="searchText"
           clearable
@@ -11,8 +11,8 @@
           @keyup.enter="search"
       />
     </el-col>
-    <el-col :span="2">
-      <el-button type="primary" @click="search">搜索</el-button>
+    <el-col :span="2" >
+      <el-button type="primary" @click="search" >搜索</el-button>
     </el-col>
   </el-row>
 

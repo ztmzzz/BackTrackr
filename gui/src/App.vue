@@ -5,6 +5,7 @@
           :default-active="$route.path"
           mode="horizontal"
           router
+          style="height: 50px"
       >
         <el-menu-item index="/search">搜索</el-menu-item>
         <el-menu-item index="/video">回想</el-menu-item>
@@ -29,6 +30,20 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 
+.el-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+</style>
+<style>
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
 </style>

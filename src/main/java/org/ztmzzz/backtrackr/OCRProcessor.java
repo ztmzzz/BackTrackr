@@ -17,6 +17,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -47,8 +48,8 @@ public class OCRProcessor {
         return ocr(base64Image);
     }
 
-    public String ocr(String base64Image) throws IOException {
-        String requestBody = "{\"images\":[\"" + base64Image + "\"]}";
+    public String ocr(String base64Image)  {
+        String requestBody = "{\"images\":\"" + base64Image + "\"}";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
@@ -56,24 +57,14 @@ public class OCRProcessor {
         // 发送POST请求并获取响应
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> response = restTemplate.postForEntity(
-                "http://127.0.0.1:8866/predict/ch_pp-ocrv3",
+                "http://localhost:8866/ocr",
                 requestEntity,
                 String.class
         );
 
         // 解析响应结果
         if (response.getStatusCode() == HttpStatus.OK) {
-            String jsonText = response.getBody();
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode node = objectMapper.readTree(jsonText);
-            node = node.get("msg").get(0);
-            OCRMessage data = objectMapper.treeToValue(node, OCRMessage.class);
-            List<OCRData> dataList = data.getData();
-            for (OCRData d : dataList) {
-                String text = d.getText();
-                d.setText(convertToNormalText(text));
-            }
-            return objectMapper.writeValueAsString(data);
+            return Objects.requireNonNull(response.getBody()).strip();
         } else {
             throw new RuntimeException("OCRProcessor API request failed");
         }
@@ -93,7 +84,7 @@ public class OCRProcessor {
         if (p.exitValue() != 0) {
             throw new IOException("创建虚拟环境失败");
         }
-        pb = new ProcessBuilder(venvPipPath, "install", "paddlehub paddlepaddle shapely pyclipper");
+        pb = new ProcessBuilder(venvPipPath, "install", "paddlehub shapely pyclipper");
         p = pb.start();
 //        BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
 //        String line;
@@ -128,7 +119,7 @@ public class OCRProcessor {
                 ProcessBuilder pb = new ProcessBuilder(hubPath, "serving", "start", "-m", "ch_pp-ocrv3", "--use_gpu");
                 Map<String, String> env = pb.environment();
                 String oldPath = env.get("PATH");
-                String cudaPath = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.7\\bin;";
+                String cudaPath = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.8\\bin;";
                 env.put("PATH", cudaPath + oldPath);
                 Process p = pb.start();
                 processRef.set(p);

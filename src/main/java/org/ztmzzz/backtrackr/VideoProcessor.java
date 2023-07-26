@@ -43,7 +43,7 @@ public class VideoProcessor {
         tempFile.delete();
     }
 
-    public void generateVideo(String year, String month, String day) {
+    public boolean generateVideo(String year, String month, String day) {
         try {
             generateImageListFile(year, month, day);
             List<String> command = new ArrayList<>();
@@ -79,9 +79,11 @@ public class VideoProcessor {
             int exitCode = process.waitFor();
             logger.info("Exit code: " + exitCode);
             removeTempFile();
+            return exitCode == 0;
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return false;
     }
 }
